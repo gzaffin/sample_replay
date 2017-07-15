@@ -60,7 +60,7 @@ $ make sample_replay
 ```
 $ cp sample-replay.sh build
 $ cd build
-$ ./sample-replay.sh 
+$ ./sample-replay.sh <filepath>/<filename>
 
 ```
 
