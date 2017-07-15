@@ -26,17 +26,22 @@ You can also build the KSS to WAV converter binary as follows.
 $ make kss2wav
 ```
 
-You can also build a stand alone MSX music formats player.
-In order to build sample_replay player, do as follows:
+You can also build a stand alone MSX music formats player. In order to build sample_replay player, do as follows:
 1 - clone this repository
+
+```
 $ git clone https://github.com/gzaffin/sample_replay
+```
 
 2 - add libkss's repository folders 'modules' and 'src' to sample_replay's repository
+
+```
 $ cd libkss
 $ cp -r modules ./../sample_replay
 $ cp -r src ./../sample_replay
+```
 
-3 - if You're going to build libkss with Microsoft Visual Studio 2015 or Microsoft Visual Studio 2017, which are recommended otherwise You'll face ISO/IEC 9899:1999 C code that do not compile and You need to re-factor it a bit, check that Your CMake version is >= 3.5, and change first row of CMakeLists.txt into e,g, 'cmake_minimum_required(VERSION 3.6)' for compiling with Microsoft Visual Studio 2017, then create a build folder, invoke cmake and compile with Visual Studio
+3 - if You're going to build libkss with Microsoft Visual Studio 2015 or Microsoft Visual Studio 2017, which are recommended otherwise You'll face ISO/IEC 9899:1999 C code that do not compile and You need to re-factor it a bit, so check that Your CMake version is >= 3.5, and change first row of CMakeLists.txt into e.g. 'cmake_minimum_required(VERSION 3.6)' for compiling with Microsoft Visual Studio 2017, then create a build folder, invoke cmake and compile with Visual Studio
 
 4 - if You're going to build under GNU/Linux and You do not want to use libao remove -DUSE_LIBAO from line 6 of CMakeLists.txt
 
@@ -48,6 +53,15 @@ $ mkdir build
 $ cd build
 $ cmake ../
 $ make sample_replay
+```
+
+6 - under GNU/Linux, if PulseAudio cannot work with ALSA driver because one of those many configurations of GNU/Linux distributions, then invoke sample_replay with 'sample-replay.sh' custom wrapper script (which use padsp PulseAudio OSS wrapper see https://linux.die.net/man/1/padsp)
+
+```
+$ cp sample-replay.sh build
+$ cd build
+$ ./sample-replay.sh 
+
 ```
 
 If You want add a 'data' folder with following files You are welcomed to do so, but this is not necessary: 
