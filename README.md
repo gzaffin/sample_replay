@@ -1,5 +1,5 @@
 # sample_replay
-This repository will add some information about libkss (https://github.com/digital-sound-antiques/libkss.git)
+This repository will add some information about libkss (URL: https://github.com/digital-sound-antiques/libkss.git)
 and a command line kss player that uses libkss.
 
 LIBKSS is a music player library for MSX music formats, forked from MSXplug.
@@ -27,6 +27,7 @@ $ make kss2wav
 ```
 
 You can also build a stand alone MSX music formats player. In order to build sample_replay player, do as follows:
+
 1 - clone this repository
 
 ```
@@ -43,7 +44,7 @@ $ cp -r src ./../sample_replay
 
 3 - if You're going to build libkss with Microsoft Visual Studio 2015 or Microsoft Visual Studio 2017, which are recommended otherwise You'll face ISO/IEC 9899:1999 C code that do not compile and You need to re-factor it a bit, so check that Your CMake version is >= 3.5, and change first row of CMakeLists.txt into e.g. 'cmake_minimum_required(VERSION 3.6)' for compiling with Microsoft Visual Studio 2017, then create a build folder, invoke cmake and compile with Visual Studio
 
-4 - if You're going to build under GNU/Linux and You do not want to use libao remove -DUSE_LIBAO from line 6 of CMakeLists.txt
+4 - if You're going to build under GNU/Linux and You do not want to use libao remove -DUSE_LIBAO from line 6 of CMakeLists.txt and change line 51 of CMakeLists.txt into this target_link_libraries(sample_replay kss m)
 
 5 - under GNU/Linux create a build folder, invoke cmake and make
 
@@ -55,7 +56,7 @@ $ cmake ../
 $ make sample_replay
 ```
 
-6 - under GNU/Linux, if PulseAudio cannot work with ALSA driver because one of those many configurations of GNU/Linux distributions, then invoke sample_replay with 'sample-replay.sh' custom wrapper script (which use padsp PulseAudio OSS wrapper see https://linux.die.net/man/1/padsp)
+6 - under GNU/Linux, if PulseAudio cannot work with ALSA driver because one of those many configurations of GNU/Linux distributions, then invoke sample_replay with 'sample-replay.sh' custom wrapper script (which use padsp PulseAudio OSS wrapper see URL: https://linux.die.net/man/1/padsp)
 
 ```
 $ cp sample-replay.sh build
@@ -64,7 +65,7 @@ $ ./sample-replay.sh <filepath>/<filename>
 
 ```
 
-If You want add a 'data' folder with following files You are welcomed to do so, but this is not necessary: 
+If You want add to repository a 'data' folder with following files You are welcomed to do so, but this is not necessary: 
 KINROU5.DRV, OPX4KSS.BIN, FMPAC.ROM, MBR143.001, MPK.BIN and MPK103.BIN
 
 These are MSX binaries files. Among other places they can be found here:
