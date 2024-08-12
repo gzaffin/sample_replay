@@ -1,4 +1,4 @@
-/* KSSPLAY SAMPLE REPLAY PROGRAM (ISO/IEC 9899 Programming Language C 1999). */
+//* KSSPLAY SAMPLE REPLAY PROGRAM (ISO/IEC 9899 Programming Language C 1999). */
 /* Play KSS files. */
 // reference file: vgmplay project's module Stream.c: C Source File for Sound Output
 // Thanks to nextvolume for NetBSD support
@@ -41,13 +41,6 @@
 #include <unistd.h>
 
 #endif // #ifdef WIN32
-
-#ifdef USE_LIBAO
-#ifdef WIN32
-#error "Sorry, but this doesn't work yet!"
-#endif
-#include <ao/ao.h>
-#endif
 
 #include <string.h>
 #include "kssplay.h"
@@ -234,9 +227,6 @@ static int _getch(void)
 static unsigned int StartStream(void)
 {
     unsigned int RetVal = 0xffffffff;
-#ifdef USE_LIBAO
-    ao_sample_format ao_fmt;
-#else
 #ifdef WIN32
     UINT16 Cnt;
     HANDLE WaveOutThreadHandle;
@@ -247,12 +237,10 @@ static unsigned int StartStream(void)
 #else
     unsigned int ArgVal;
 #endif
-#endif  // USE_LIBAO
 
     if (WaveOutOpen)
         return 0xD0;    // Thread is already active
 
-#if defined(WIN32) || defined(USE_LIBAO)
 #if defined(WIN32)
     // Init Audio
     WaveFmt.wFormatTag = WAVE_FORMAT_PCM;
@@ -262,16 +250,12 @@ static unsigned int StartStream(void)
     WaveFmt.nBlockAlign = ( WaveFmt.nChannels * WaveFmt.wBitsPerSample ) / 8;
     WaveFmt.nAvgBytesPerSec = WaveFmt.nBlockAlign * WaveFmt.nSamplesPerSec;
     WaveFmt.cbSize = 0;
-#else
-    memset(&ao_fmt, 0, sizeof(ao_sample_format));
 #endif // WIN32
 
     BufferBytesSize = SAMPLE_RATE * SAMPLESIZE / 100; /* 1/100 s = 10 ms */
     if (BufferBytesSize > BUFSIZE_MAX)
         BufferBytesSize = BUFSIZE_MAX;
-#else
-    BufferBytesSize = 1 << BUFSIZELD;
-#endif
+
     samplesPerBuffer = BufferBytesSize / SAMPLESIZE;
     if (usedAudioBuffers > AUDIOBUFFERS)
         usedAudioBuffers = AUDIOBUFFERS;
@@ -281,7 +265,6 @@ static unsigned int StartStream(void)
     CloseThread = false;
     StreamPause = false;
 
-#ifndef USE_LIBAO
 #ifdef WIN32
     WaveOutThreadHandle = CreateThread(NULL, 0x00, &WaveOutThread, NULL, 0x00,
                                        &WaveOutThreadID);
@@ -296,20 +279,10 @@ static unsigned int StartStream(void)
 #else
     hWaveOut = open("/dev/dsp", O_WRONLY);
 #endif
+
     if (hWaveOut < 0)
 #endif
-#else   // ifndef USE_LIBAO
-    ao_initialize();
 
-    ao_fmt.bits = 16;
-    ao_fmt.rate = SAMPLE_RATE;
-    ao_fmt.channels = CHNL_NUM;
-    ao_fmt.byte_format = AO_FMT_NATIVE;
-    ao_fmt.matrix = NULL;
-
-    dev_ao = ao_open_live(ao_default_driver_id(), &ao_fmt, NULL);
-    if (dev_ao == NULL)
-#endif
     {
         CloseThread = true;
         return 0xC0;        // waveOutOpen failed
@@ -319,7 +292,6 @@ static unsigned int StartStream(void)
     //sprintf(TestStr, "Buffer 0,0:\t%p\nBuffer 0,1:\t%p\nBuffer 1,0:\t%p\nBuffer 1,1:\t%p\n",
     //      &BufferOut[0][0], &BufferOut[0][1], &BufferOut[1][0], &BufferOut[1][1]);
     //AfxMessageBox(TestStr);
-#ifndef USE_LIBAO
 #ifdef WIN32
     for (Cnt = 0x00; Cnt < usedAudioBuffers; Cnt ++)
     {
@@ -364,10 +336,8 @@ static unsigned int StartStream(void)
     if (RetVal)
         printf("Error setting Sample Rate!\n");
 #endif
+
     RetVal = 0U;
-#else
-    RetVal = 0U;
-#endif  // USE_LIBAO
 
     PauseThread = false;
     return RetVal;
@@ -394,7 +364,6 @@ static unsigned int StopStream(void)
 #endif
     WaveOutOpen = false;
 
-#ifndef USE_LIBAO
 #ifdef WIN32
     /* RetVal = */waveOutReset(hWaveOut);
     for (Cnt = 0x00; Cnt < usedAudioBuffers; Cnt ++)
@@ -406,12 +375,7 @@ static unsigned int StopStream(void)
 #else
     RetVal = close(hWaveOut);
 #endif
-#else
-    /* RetVal = */ao_close(dev_ao);
 
-    /* RetVal = */ao_shutdown();
-    RetVal = 0U;
-#endif   // ifndef USE_LIBAO
     return RetVal;
 }
 
@@ -552,11 +516,7 @@ void WaveOutLinuxCallBack(void)
     }
     BlocksPlayed++;
 
-#ifndef USE_LIBAO
     /* RetVal = */write(hWaveOut, (const void *)BufferOut[CurBuf], (size_t)(samplesPerBuffer * SAMPLESIZE));
-#else
-    /* RetVal = */ao_play(dev_ao, (char *)&BufferOut[CurBuf][0], (uint_32)(samplesPerBuffer * SAMPLESIZE));
-#endif
 
 #ifdef NDEBUG
     if (0 == (BlocksPlayed % 10))
@@ -614,26 +574,41 @@ int main(int argc, char *argv[]) {
 #ifdef NDEBUG
     printf("usedAudioBuffers %u\n",usedAudioBuffers) ;
 #endif
+
     if (argc < 2) {
 #if !defined(WIN32)
         changemode(false);
 #endif
+
         printf("Usage: %s FILENAME\n",argv[0]) ;
         exit(-1);
     }
 
-    KSS_load_kinrou("IN_MSX_PATHKINROU5.DRV") ;
-    KSS_load_opxdrv("IN_MSX_PATHOPX4KSS.BIN") ;
-    KSS_load_fmbios("IN_MSX_PATHFMPAC.ROM") ;
-    KSS_load_mbmdrv("IN_MSX_PATHMBR143.001") ;
-    KSS_load_mpk106("IN_MSX_PATHMPK.BIN") ;
-    KSS_load_mpk103("IN_MSX_PATHMPK103.BIN") ;
+#if defined (IN_MSX_PATH)
+#if defined (WIN32)
+    KSS_load_kinrou("IN_MSX_PATH/KINROU5.DRV") ;
+    KSS_load_opxdrv("IN_MSX_PATH/OPX4KSS.BIN") ;
+    KSS_load_fmbios("IN_MSX_PATH/FMPAC.ROM") ;
+    KSS_load_mbmdrv("IN_MSX_PATH/MBR143.001") ;
+    KSS_load_mpk106("IN_MSX_PATH/MPK.BIN") ;
+    KSS_load_mpk103("IN_MSX_PATH/MPK103.BIN") ;
+#else
+    KSS_load_kinrou("IN_MSX_PATH\KINROU5.DRV") ;
+    KSS_load_opxdrv("IN_MSX_PATH\OPX4KSS.BIN") ;
+    KSS_load_fmbios("IN_MSX_PATH\FMPAC.ROM") ;
+    KSS_load_mbmdrv("IN_MSX_PATH\MBR143.001") ;
+    KSS_load_mpk106("IN_MSX_PATH\MPK.BIN") ;
+    KSS_load_mpk103("IN_MSX_PATH\MPK103.BIN") ;
+#endif
+
+#endif
 
     if((kss=KSS_load_file(argv[1]))== NULL)
     {
 #if !defined(WIN32)
         changemode(false);
 #endif
+
         printf("FILE READ ERROR!\n") ;
         exit(-1) ;
     }
@@ -660,6 +635,7 @@ int main(int argc, char *argv[]) {
 #if !defined(WIN32)
         changemode(false);
 #endif
+
         printf("Error opening Sound Device!\n");
         return -1;
     }
@@ -686,6 +662,7 @@ int main(int argc, char *argv[]) {
             printf("Playing %01.2f%%   \b\b\b\t", 100.0);
             fflush(stdout);
 #endif
+
             /* PlaySmpl = BlocksPlayed * samplesPerBuffer; */
         }
 #ifndef WIN32
@@ -738,6 +715,7 @@ int main(int argc, char *argv[]) {
 #if !defined(WIN32)
             fflush(stdout);
 #endif
+
         }
     }
     done = false;
