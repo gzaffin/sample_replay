@@ -6,8 +6,8 @@ Supported formats are .kss, .mgs, .bgm, .opx, .mpk, .mbm.
 
 CMake would create a building environment on Windows OS (it requires Microsoft Visual Studio) and on GNU/Linux OS (it requires GNU toolchain).  
 
-# How to build
-The following step builds `libkss.a` library.  
+## How to build
+The following steps build `libkss` library, build `sample_replay` application statically linked with `libkss`.  
 
 ```
 $ git clone https://github.com/gzaffin/sample_replay.git
