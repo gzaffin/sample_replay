@@ -47,24 +47,6 @@
 #define CHNL_NUM 1
 #define SAMPLE_RATE 44100
 
-#ifndef WIN32
-typedef struct
-{
-    unsigned short wFormatTag;
-    unsigned short nChannels;
-    unsigned int nSamplesPerSec;
-    unsigned int nAvgBytesPerSec;
-    unsigned short nBlockAlign;
-    unsigned short wBitsPerSample;
-    unsigned short cbSize;
-} WAVEFORMATEX; // from MSDN Help
-
-#define WAVE_FORMAT_PCM 0x0001
-#endif // #ifndef WIN32
-
-// reference: vgmplay project's module Stream.h: Header File for constants and structures related to Sound Output
-//
-
 #ifdef WIN32
 #include <mmsystem.h>
 #else // #ifdef WIN32
@@ -916,46 +898,49 @@ int main(int argc, char *argv[]) {
     /*PlayTimeEnd = 0U;*/
 #if !defined(WIN32)
     snd_pcm_prepare(handle);
-            WaveOutLinuxCallBack(PausePlay);
-            (void)snd_pcm_writei(handle, samples, period_size);
-//            int err = transfer_method.transfer_loop(handle, samples, &areas);
-//            if (err < 0) {
-//                printf("Transfer failed: %s\n", snd_strerror(err));
-//            }
-            WaveOutLinuxCallBack(PausePlay);
-            (void)snd_pcm_writei(handle, samples, period_size);
-//            int err = transfer_method.transfer_loop(handle, samples, &areas);
-//            if (err < 0) {
-//                printf("Transfer failed: %s\n", snd_strerror(err));
-//            }
-            WaveOutLinuxCallBack(PausePlay);
-            (void)snd_pcm_writei(handle, samples, period_size);
-//            int err = transfer_method.transfer_loop(handle, samples, &areas);
-//            if (err < 0) {
-//                printf("Transfer failed: %s\n", snd_strerror(err));
-//            }
-            WaveOutLinuxCallBack(PausePlay);
-            (void)snd_pcm_writei(handle, samples, period_size);
-//            int err = transfer_method.transfer_loop(handle, samples, &areas);
-//            if (err < 0) {
-//                printf("Transfer failed: %s\n", snd_strerror(err));
-//            }
+
+    WaveOutLinuxCallBack(PausePlay);
+    (void)snd_pcm_writei(handle, samples, period_size);
+//    int err = transfer_method.transfer_loop(handle, samples, &areas);
+//    if (err < 0) {
+//        printf("Transfer failed: %s\n", snd_strerror(err));
+//    }
+    WaveOutLinuxCallBack(PausePlay);
+    (void)snd_pcm_writei(handle, samples, period_size);
+//    int err = transfer_method.transfer_loop(handle, samples, &areas);
+//    if (err < 0) {
+//        printf("Transfer failed: %s\n", snd_strerror(err));
+//    }
+    WaveOutLinuxCallBack(PausePlay);
+    (void)snd_pcm_writei(handle, samples, period_size);
+//    int err = transfer_method.transfer_loop(handle, samples, &areas);
+//    if (err < 0) {
+//        printf("Transfer failed: %s\n", snd_strerror(err));
+//    }
+    WaveOutLinuxCallBack(PausePlay);
+    (void)snd_pcm_writei(handle, samples, period_size);
+//    int err = transfer_method.transfer_loop(handle, samples, &areas);
+//    if (err < 0) {
+//        printf("Transfer failed: %s\n", snd_strerror(err));
+//    }
 #endif // #if !defined(WIN32)
 
     while(1)
     {
 
 #if !defined(WIN32)
-        WaveOutLinuxCallBack(PausePlay);
-        if (PausePlay) {
-            memset(samples, 0, period_size * areas.step);
-        }
-        (void)snd_pcm_writei(handle, samples, period_size);
+        if (snd_pcm_avail_update(handle) >= period_size) {
+            WaveOutLinuxCallBack(PausePlay);
+            if (PausePlay) {
+                memset(samples, 0, period_size * areas.step);
+            }
+            (void)snd_pcm_writei(handle, samples, period_size);
 
-//        int err = transfer_method.transfer_loop(handle, samples, &areas);
-//        if (err < 0) {
-//            printf("Transfer failed: %s\n", snd_strerror(err));
-//        }
+//            int err = transfer_method.transfer_loop(handle, samples, &areas);
+//            if (err < 0) {
+//                printf("Transfer failed: %s\n", snd_strerror(err));
+//            }
+        }
 #endif // #if !defined(WIN32)
 
         if (_kbhit()) {
