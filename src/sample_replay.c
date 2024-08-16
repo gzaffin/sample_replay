@@ -2,6 +2,9 @@
 /* Play KSS files. */
 /* reference file: vgmplay project's module Stream.c: C Source File for Sound Output */
 
+// define SAMPLE_RPLY_PRINT for additional pieces of information on standard output
+//#define SAMPLE_RPLY_PRINT (1)
+
 #ifdef WIN32
 #include <stdlib.h>
 #include <stdio.h>
@@ -343,7 +346,7 @@ static unsigned int StartStream(void)
         exit(EXIT_FAILURE);
     }
 
-#ifdef NDEBUG
+#ifdef SAMPLE_RPLY_PRINT
     printf(" buffer_time = %uus\n period_time = %uus\n buffer_size = %ld\n period_size = %ld\n", buffer_time, period_time, buffer_size, period_size);
 
     /* Resume information */
@@ -372,15 +375,15 @@ static unsigned int StartStream(void)
         exit(EXIT_FAILURE);
     }
     printf(" buffer_time = %uus\n period_time = %uus\n buffer_size = %ld\n period_size = %ld\n", buffer_time, period_time, buffer_size, period_size);
-#endif // #ifdef NDEBUG
+#endif // #ifdef SAMPLE_RPLY_PRINT
 
     /* Allocate buffer to hold single period */
     areas.first = 0;
     areas.step = snd_pcm_format_physical_width(format) / 8;
     buff_size = period_size * channels * areas.step /* 2 is sample size when channels = 1 and format = SND_PCM_FORMAT_S16_LE */;
-#ifdef NDEBUG
+#ifdef SAMPLE_RPLY_PRINT
     printf(" buff_size = %li bytes\n", buff_size);
-#endif // #ifdef NDEBUG
+#endif // #ifdef SAMPLE_RPLY_PRINT
     samples = (int16_t *)malloc(buff_size);
     areas.addr = samples;
 
@@ -771,12 +774,12 @@ void WaveOutLinuxCallBack(bool PausePlay)
     }
     BlocksPlayed++;
 
-#ifdef NDEBUG
+#ifdef SAMPLE_RPLY_PRINT
     if (0 == (BlocksPlayed % 10))
     {
         printf("+10Blocks\n");
     }
-#endif // #ifdef NDEBUG
+#endif // #ifdef SAMPLE_RPLY_PRINT
 
 }
 
@@ -821,9 +824,9 @@ int main(int argc, char *argv[]) {
 #endif // #ifdef WIN32
 
     printf("[KSSPLAY SAMPLE PROGRAM] q)uit v)ol- V)ol+ p)rev n)ext spacebar for pause\n") ;
-#ifdef NDEBUG
+#ifdef SAMPLE_RPLY_PRINT
     printf("usedAudioBuffers %u\n",usedAudioBuffers) ;
-#endif // #ifdef NDEBUG
+#endif // #ifdef SAMPLE_RPLY_PRINT
 
     if (argc < 2) {
 #if !defined(WIN32)
@@ -866,9 +869,12 @@ int main(int argc, char *argv[]) {
     /* INIT KSSPLAY */
     kssplay = KSSPLAY_new(rate, nch, bps) ;
     KSSPLAY_set_data(kssplay, kss) ;
+    vol = kssplay->master_volume ;
+#ifdef SAMPLE_RPLY_PRINT
+    printf("Vol = %d\n", (vol = kssplay->master_volume));
+#endif // #ifdef SAMPLE_RPLY_PRINT
 
     /* Print title strings */
-    printf("Vol = %d\n", (vol = kssplay->master_volume));
     printf("[%s]", kss->idstr);
     printf("%s\n", kss->title);
     if (kss->extra)
@@ -956,18 +962,22 @@ int main(int argc, char *argv[]) {
                 case 'n' :
                     song_num = (song_num+1)&0xff ;
                     KSSPLAY_reset(kssplay, song_num, 0) ;
+                    BlocksSent = 0U ;
                     break ;
                 case 'N' :
                     song_num = (song_num+10)&0xff ;
                     KSSPLAY_reset(kssplay, song_num, 0) ;
+                    BlocksSent = 0U ;
                     break ;
                 case 'p' :
                     song_num = (song_num+0xff)&0xff ;
                     KSSPLAY_reset(kssplay, song_num, 0) ;
+                    BlocksSent = 0U ;
                     break ;
                 case 'P' :
                     song_num = (song_num+0xff-9)&0xff ;
                     KSSPLAY_reset(kssplay, song_num, 0) ;
+                    BlocksSent = 0U ;
                     break ;
                 case ' ' :
                     PausePlay = !PausePlay ;
@@ -1005,13 +1015,23 @@ int main(int argc, char *argv[]) {
                 }
                     break ;
             }
-            printf("[$%02x(%d)]",song_num,song_num) ;
+        }
+#if !defined(WIN32)
+        if (0U == (BlocksPlayed % 1U)) {
+            unsigned int play_time_ms = 100U * BlocksSent;
+#else // #if !defined(WIN32)
+        if (0U == (BlocksPlayed % 10U)) {
+            unsigned int play_time_ms = 10U * BlocksSent;
+#endif // #if !defined(WIN32)
+            unsigned int play_time_min = play_time_ms / 60000U;
+            unsigned int play_time_tmp = play_time_ms - (play_time_min * 60000U);
+            unsigned int play_time_sec = play_time_tmp / 1000U;
+            unsigned int play_time_msec = play_time_tmp % 1000U;
+            printf("$%03d [V%04d] %03d:%02d:%03d\r", song_num, vol, play_time_min, play_time_sec, play_time_msec);
 #if !defined(WIN32)
             fflush(stdout);
 #endif // #if !defined(WIN32)
-
         }
-
     }
 
 quit:
