@@ -23,6 +23,11 @@
 #include <string.h>
 #include "kssplay.h"
 
+#ifdef USE_ICONV
+#include <iconv.h>
+#include <string.h>
+#endif
+
 #else // #ifdef WIN32
 
 #include <stdlib.h>
@@ -875,6 +880,105 @@ int main(int argc, char *argv[]) {
 #endif // #ifdef SAMPLE_RPLY_PRINT
 
     /* Print title strings */
+#ifdef USE_ICONV
+
+    printf("[%s]", kss->idstr);
+
+    char data_locale[1024];
+    memset(data_locale, 0, sizeof data_locale);
+
+    iconv_t icd = iconv_open("UTF-8", "SHIFT-JIS");
+
+    if (icd != (iconv_t)(-1))
+    {
+        char* srcstr = kss->title;
+        char* deststr = data_locale;
+
+        size_t srclen = (NULL != srcstr) ? strlen(srcstr) + 1 : 0;
+        size_t destlen = 1024;
+        size_t wrtBytes = 0;
+
+        iconv(icd, NULL, NULL, NULL, NULL); // reset conversion state
+
+        wrtBytes = iconv(icd, &srcstr, &srclen, &deststr, &destlen);
+        if (wrtBytes != (size_t)-1)
+        {
+#ifdef WIN32
+            UINT oldCodePage;
+            oldCodePage = GetConsoleOutputCP();
+            if (!SetConsoleOutputCP(65001)) {
+                printf("error\n");
+            }
+            fwrite(data_locale, 1, strlen(data_locale) + 1, stdout);
+            printf("\n");
+
+            SetConsoleOutputCP(oldCodePage);
+#else // WIN32
+            printf("%s\n", data_locale);
+#endif // WIN32
+        }
+        else
+        {
+            printf("%s\n", kss->title);
+        }
+
+        if (kss->extra)
+        {
+            memset(data_locale, 0, sizeof data_locale);
+            srcstr = kss->extra;
+            deststr = data_locale;
+
+            size_t srclen = (NULL != srcstr) ? strlen(srcstr) + 1 : 0;
+            size_t destlen = 1024;
+            size_t wrtBytes = 0;
+
+            iconv(icd, NULL, NULL, NULL, NULL); // reset conversion state
+
+            wrtBytes = iconv(icd, &srcstr, &srclen, &deststr, &destlen);
+            if (wrtBytes != (size_t)-1)
+            {
+#ifdef WIN32
+                UINT oldCodePage;
+                oldCodePage = GetConsoleOutputCP();
+                if (!SetConsoleOutputCP(65001)) {
+                    printf("error\n");
+                }
+                fwrite(data_locale, 1, strlen(data_locale) + 1, stdout);
+                printf("\n");
+
+                SetConsoleOutputCP(oldCodePage);
+#else // WIN32
+                printf("%s\n", data_locale);
+#endif // WIN32
+            }
+            else
+            {
+                printf("%s\n", kss->extra);
+            }
+        }
+        else
+        {
+            printf("\n");
+        }
+
+        iconv_close(icd);
+    }
+    else
+    {
+        printf("[%s]", kss->idstr);
+        printf("%s\n", kss->title);
+        if (kss->extra)
+        {
+            printf("%s\n", kss->extra);
+        }
+        else
+        {
+            printf("\n");
+        }
+    }
+
+#else // USE_ICONV
+
     printf("[%s]", kss->idstr);
     printf("%s\n", kss->title);
     if (kss->extra)
@@ -885,6 +989,7 @@ int main(int argc, char *argv[]) {
     {
         printf("\n");
     }
+#endif // USE_ICONV
 
     if (0U != StartStream())
     {
