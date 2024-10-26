@@ -25,7 +25,6 @@
 
 #ifdef USE_ICONV
 #include <iconv.h>
-#include <string.h>
 #endif
 
 #else // #ifdef WIN32
@@ -49,6 +48,10 @@
 
 #include <string.h>
 #include "kssplay.h"
+
+#ifdef USE_ICONV
+#include <iconv.h>
+#endif
 
 #endif // #ifdef WIN32
 
@@ -143,6 +146,11 @@ static int xrun_recovery(snd_pcm_t *handle, int err);
 static int write_loop(snd_pcm_t *handle,
               int16_t *samples,
               snd_pcm_channel_area_t *areas);
+
+#ifdef USE_ICONV
+static int conv_with_iconv(char *title_orig, char *title_locale, const char *fromcode);
+
+#endif
 
 /*
  *
@@ -790,6 +798,46 @@ void WaveOutLinuxCallBack(bool PausePlay)
 
 #endif // ifdef WIN32
 
+#ifdef USE_ICONV
+/*
+// conv_with_iconv
+*/
+
+static int conv_with_iconv(char *title_orig, char *title_locale, const char *fromcode)
+{
+    iconv_t icd = iconv_open("UTF-8", fromcode);
+
+    if (icd != (iconv_t)(-1))
+    {
+        char *srcstr = title_orig;
+        char *deststr = title_locale;
+
+        size_t srclen = (NULL != srcstr) ? strlen(srcstr) + 1 : 0;
+        size_t destlen = 1024;
+        size_t wrtBytes = 0;
+
+        (void)iconv(icd, NULL, NULL, NULL, NULL); // reset conversion state
+
+        wrtBytes = iconv(icd, &srcstr, &srclen, &deststr, &destlen);
+        if (wrtBytes == (size_t)-1)
+        {
+            /*printf("error iconv\n");*/
+            return -1;
+        }
+
+        iconv_close(icd);
+    }
+    else
+    {
+        /*printf("error iconv_open\n");*/
+        return -1;
+    }
+
+    return 0;
+}
+
+#endif
+
 int main(int argc, char *argv[]) {
     const int rate = SAMPLE_RATE, nch = CHNL_NUM, bps = 16;
     int song_num = 0, play_time = 60, fade_time = 5, loop_num = 1, vol = 0;
@@ -881,102 +929,34 @@ int main(int argc, char *argv[]) {
 
     /* Print title strings */
 #ifdef USE_ICONV
-
     printf("[%s]", kss->idstr);
 
     char data_locale[1024];
     memset(data_locale, 0, sizeof data_locale);
 
-    iconv_t icd = iconv_open("UTF-8", "SHIFT-JIS");
-
-    if (icd != (iconv_t)(-1))
+    if (0 == conv_with_iconv(kss->title, data_locale, "SHIFT-JIS"))
     {
-        char* srcstr = kss->title;
-        char* deststr = data_locale;
-
-        size_t srclen = (NULL != srcstr) ? strlen(srcstr) + 1 : 0;
-        size_t destlen = 1024;
-        size_t wrtBytes = 0;
-
-        iconv(icd, NULL, NULL, NULL, NULL); // reset conversion state
-
-        wrtBytes = iconv(icd, &srcstr, &srclen, &deststr, &destlen);
-        if (wrtBytes != (size_t)-1)
-        {
 #ifdef WIN32
-            UINT oldCodePage;
-            oldCodePage = GetConsoleOutputCP();
-            if (!SetConsoleOutputCP(65001)) {
-                printf("error\n");
-            }
-            fwrite(data_locale, 1, strlen(data_locale) + 1, stdout);
-            printf("\n");
+        UINT oldCodePage;
+        oldCodePage = GetConsoleOutputCP();
+        if (!SetConsoleOutputCP(65001))
+        {
+            printf("error\n");
+        }
+        fwrite(data_locale, 1, strlen(data_locale) + 1, stdout);
+        printf("\n");
 
-            SetConsoleOutputCP(oldCodePage);
+        SetConsoleOutputCP(oldCodePage);
 #else // WIN32
-            printf("%s\n", data_locale);
+
+        printf("%s\n", data_locale);
 #endif // WIN32
-        }
-        else
-        {
-            printf("%s\n", kss->title);
-        }
 
-        if (kss->extra)
-        {
-            memset(data_locale, 0, sizeof data_locale);
-            srcstr = kss->extra;
-            deststr = data_locale;
-
-            size_t srclen = (NULL != srcstr) ? strlen(srcstr) + 1 : 0;
-            size_t destlen = 1024;
-            size_t wrtBytes = 0;
-
-            iconv(icd, NULL, NULL, NULL, NULL); // reset conversion state
-
-            wrtBytes = iconv(icd, &srcstr, &srclen, &deststr, &destlen);
-            if (wrtBytes != (size_t)-1)
-            {
-#ifdef WIN32
-                UINT oldCodePage;
-                oldCodePage = GetConsoleOutputCP();
-                if (!SetConsoleOutputCP(65001)) {
-                    printf("error\n");
-                }
-                fwrite(data_locale, 1, strlen(data_locale) + 1, stdout);
-                printf("\n");
-
-                SetConsoleOutputCP(oldCodePage);
-#else // WIN32
-                printf("%s\n", data_locale);
-#endif // WIN32
-            }
-            else
-            {
-                printf("%s\n", kss->extra);
-            }
-        }
-        else
-        {
-            printf("\n");
-        }
-
-        iconv_close(icd);
     }
     else
     {
-        printf("[%s]", kss->idstr);
         printf("%s\n", kss->title);
-        if (kss->extra)
-        {
-            printf("%s\n", kss->extra);
-        }
-        else
-        {
-            printf("\n");
-        }
     }
-
 #else // USE_ICONV
 
     printf("[%s]", kss->idstr);
