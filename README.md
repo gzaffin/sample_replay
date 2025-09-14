@@ -1,5 +1,5 @@
 # sample_replay
-This repository attach a command line player to [LIBKSS](URL: https://github.com/digital-sound-antiques/libkss.git) library .  
+This repository attach a command line player to [LIBKSS](https://github.com/digital-sound-antiques/libkss.git) library .  
 
 LIBKSS is a music player library for MSX music formats, forked from MSXplug.  
 Supported formats are .kss, .mgs, .bgm, .opx, .mpk, .mbm.  
