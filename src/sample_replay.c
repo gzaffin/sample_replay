@@ -421,8 +421,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
                 changemode(false);
 #endif // #if !defined(WIN32)
 
-                KSSPLAY_delete(kssplay);
-                KSS_delete(kss);
+                /* SDL_AppQuit is doing these two calls */
+                /*KSSPLAY_delete(kssplay);
+                KSS_delete(kss);*/
 
                 return SDL_APP_SUCCESS;  /* end the program, reporting success to the OS. */
                 break;
