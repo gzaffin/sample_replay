@@ -70,6 +70,8 @@ static void WinNT_Check(void);
 static void changemode(bool);
 static int _kbhit(void);
 static int _getch(void);
+static struct termios oldterm;
+static bool termmode = false;
 
 #endif // #ifdef WIN32
 
